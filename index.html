@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Alaska Healthcare Facilities</title>
+  <meta charset="utf-8">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 904px;
+      font-family: 'Arial', sans-serif;
+      overflow: hidden;
+    }
+    #app-container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+    #tabs {
+      display: flex;
+      background: #2c3e50;
+    }
+    .tab {
+      padding: 12px 20px;
+      color: white;
+      cursor: pointer;
+      background: #34495e;
+      border-right: 1px solid #2c3e50;
+    }
+    .tab.active {
+      background: #3498db;
+      font-weight: bold;
+    }
+    #content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    #map-container {
+      height: 795px;
+      width: 100%;
+      position: relative;
+
+    }
+    #map {
+      height: 100%;
+      width: 100%;
+    }
+    #chat-container {
+      display: none;
+      height: 825px;
+      padding: 20px;
+      background: #f5f5f5;
+      overflow: hidden;
+    }
+    #controls {
+      padding: 15px;
+      background: #ecf0f1;
+      border-bottom: 1px solid #bdc3c7;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+    select, button {
+      padding: 8px 12px;
+      border-radius: 4px;
+      border: 1px solid #bdc3c7;
+      background: white;
+      font-size: 14px;
+    }
+    button {
+      background: #3498db;
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background: #2980b9;
+    }
+    button:disabled {
+      background: #95a5a6;
+      cursor: not-allowed;
+    }
+    #loading {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.7);
+      color: white;
+      padding: 15px 25px;
+      border-radius: 5px;
+      z-index: 1000;
+    }
+    #chat-messages {
+      height: calc(100% - 100px);
+      overflow-y: auto;
+      overflow-x: hidden;
+      margin-bottom: 10px;
+      padding: 10px;
+      background: white;
+      border-radius: 5px;
+      border: 1px solid #ddd;
+    }
+    #chat-input {
+      display: flex;
+      gap: 10px;
+    }
+    #user-input {
+      flex: 1;
+      padding: 10px;
+      border-radius: 4px;
+      border: 1px solid #bdc3c7;
+    }
+    .message {
+      margin-bottom: 10px;
+      padding: 8px 12px;
+      border-radius: 4px;
+    }
+    .user-message {
+      background: #e3f2fd;
+      margin-left: 20%;
+    }
+    .bot-message {
+      background: #f1f1f1;
+      margin-right: 20%;
+    }
+  </style>
+</head>
+<body>
+
+<div id="app-container">
+  <div id="tabs">
+    <div class="tab active" onclick="switchTab('map')">Healthcare Map</div>
+    <div class="tab" onclick="switchTab('chat')">Healthcare Assistant</div>
+  </div>
+
+  <div id="content">
+    <div id="map-container">
+      <div id="controls">
+        <select id="city-selector">
+          <option value="61.2181,-149.9003">Anchorage</option>
+          <option value="64.8436,-147.7231">Fairbanks</option>
+          <option value="58.3019,-134.4197">Juneau</option>
+          <option value="57.7900,-152.4072">Kodiak</option>
+          <option value="60.7922,-161.7558">Bethel</option>
+          <option value="66.8986,-162.5913">Kotzebue</option>
+          <option value="55.3422,-131.6461">Ketchikan</option>
+          <option value="63.0344,-163.5533">Nome</option>
+          <option value="60.4874,-151.0595">Soldotna</option>
+          <option value="59.0585,-158.4720">Dillingham</option>
+          <option value="61.6013,-149.1107">Palmer</option>
+          <option value="57.0633,-135.3472">Sitka</option>
+          <option value="56.8030,-132.9487">Petersburg</option>
+          <option value="60.1078,-149.4388">Seward</option>
+          <option value="71.2907,-156.7874">Barrow</option>
+          <option value="59.6500,-151.5283">Homer</option>
+          <option value="56.4811,-132.3805">Wrangell</option>
+          <option value="59.1111,-156.8604">Levelock</option>
+          <option value="58.7310,-157.0076">Naknek</option>
+          <option value="61.1313,-146.3510">Valdez</option>
+          <option value="63.3405,-142.9888">Tok</option>
+          <option value="64.0403,-145.7324">Delta Junction</option>
+          <option value="58.6898,-156.6621">King Salmon</option>
+          <option value="61.5809,-149.4421">Wasilla</option>
+          <option value="61.5792,-149.3169">South Lakes</option>
+
+          <!-- <option value="57.5638,-157.5775">Pilot Point</option>
+          <option value="60.1986,-154.3247">Port Alsworth</option>
+          <option value="59.1185,-161.5804">Goodnews Bay</option>
+          <option value="59.9743,-154.8473">Nondalton</option>
+          <option value="59.7890,-154.1036">Pedro Bay</option>
+          <option value="59.4380,-154.7763">Kokhanok</option>
+          <option value="59.7241,-154.8939">Newhalen</option>
+          <option value="59.7570,-154.8699">Iliamna</option>
+          <option value="59.3273,-155.8917">Igiugig</option>
+          <option value="60.7753,-148.6872">Whittier</option>
+          <option value="62.9859,-156.0770">Takotna</option>
+          <option value="62.9513,-155.5809">McGrath</option>
+          <option value="63.0148,-154.3735">Nikolai</option>
+          <option value="58.2138,-157.3744">Egegik</option>
+          <option value="56.9507,-158.6369">Port Heiden</option>
+          <option value="56.2953,-158.4050">Chignik</option>
+          <option value="55.9127,-159.1451">Perryville</option>
+          <option value="55.3399,-160.4992">Sand Point</option>
+          <option value="55.2064,-162.7168">Cold bay</option>
+          <option value="54.8544,-163.4138">False Pass</option> -->
+
+        </select>
+        <button onclick="searchHospitals()">Find Hospitals</button>
+        <button onclick="locateMe()">Use My Location</button>
+        <button onclick="clearMarkers()">Clear Markers</button>
+      </div>
+      <div id="map"></div>
+      <div id="loading">Loading hospitals...</div>
+    </div>
+
+    <div id="chat-container">
+      <div id="chat-messages">
+        <div class="message bot-message">
+          Hello! I'm your Alaska Healthcare Assistant. How can I help you today?
+        </div>
+      </div>
+      <div id="chat-input">
+        <input type="text" id="user-input" placeholder="Ask about healthcare in Alaska...">
+        <button onclick="sendMessage()">Send</button>
+        <button type="button" onclick="clearChat()">Clear Chat</button>
+      </div>
+      <div>
+        <label>Upload PDF for context</label>
+        <input type="file" id="pdf-upload" accept="application/pdf">
+        <button onclick="uploadPDF()">Upload</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  window.addEventListener('DOMContentLoaded', () => {
+    const savedHistory = JSON.parse(localStorage.getItem('chatHistory')) || [];
+    savedHistory.forEach(({ text, sender }) => {
+      addMessage(text, sender);
+    });
+  });
+
+  let map;
+  let markers = [];
+  let service;
+  let infoWindow;
+  const defaultLocation = { lat: 61.2181, lng: -149.9003 }; // Anchorage
+
+  function initMap() {
+    map = new google.maps.Map(document.getElementById("map"), {
+      center: defaultLocation,
+      zoom: 11,
+      styles: [
+        {
+          featureType: "poi.medical",
+          elementType: "labels.icon",
+          stylers: [{ visibility: "off" }]
+        }
+      ]
+    });
+
+    service = new google.maps.places.PlacesService(map);
+    infoWindow = new google.maps.InfoWindow();
+
+    // Add click listener for the map to close info windows
+    map.addListener("click", () => {
+      infoWindow.close();
+    });
+
+    // Initial load for default city
+    searchHospitals();
+    sortCitySelector();
+  }
+
+  function searchHospitals() {
+    showLoading(true);
+    clearMarkers();
+
+    const cityCoords = document.getElementById("city-selector").value.split(",");
+    const cityLocation = {
+      lat: parseFloat(cityCoords[0]),
+      lng: parseFloat(cityCoords[1])
+    };
+
+    map.setCenter(cityLocation);
+    map.setZoom(12);
+
+    const request = {
+      location: cityLocation,
+      radius: 50000, // 50km radius
+      type: "hospital",
+    };
+
+    service.nearbySearch(request, (results, status) => {
+      showLoading(false);
+      if (status === google.maps.places.PlacesServiceStatus.OK) {
+        if (results.length === 0) {
+          alert("No hospitals found in this area. Try a larger city.");
+          return;
+        }
+
+        for (let place of results) {
+          createMarker(place);
+        }
+
+        const bounds = new google.maps.LatLngBounds();
+        for (let m of markers) {
+          bounds.extend(m.getPosition());
+        }
+        map.fitBounds(bounds);
+        google.maps.event.addListenerOnce(map, 'idle', function () {
+          const currentZoom = map.getZoom();
+          const minZoom = 15;
+          if (currentZoom > minZoom) {
+            map.setZoom(minZoom);
+          }
+        });
+      } else {
+        alert("Error searching for hospitals: " + status);
+      }
+    });
+  }
+
+  function createMarker(place) {
+    if (!place.geometry || !place.geometry.location) return;
+
+    const marker = new google.maps.Marker({
+      map,
+      position: place.geometry.location,
+      title: place.name,
+      icon: {
+        url: "http://maps.google.com/mapfiles/ms/icons/red-dot.png",
+        scaledSize: new google.maps.Size(32, 32)
+      }
+    });
+
+    marker.addListener("click", () => {
+      let content = `<strong>${place.name}</strong><br>`;
+      content += place.vicinity ? `${place.vicinity}<br>` : '';
+
+      // Add more details if available
+      if (place.rating) content += `Rating: ${place.rating}/5<br>`;
+      if (place.user_ratings_total) content += `Reviews: ${place.user_ratings_total}<br>`;
+      if (place.opening_hours) {
+        content += place.opening_hours.open_now ? 'Open Now' : 'Closed Now';
+      }
+
+      infoWindow.setContent(content);
+      infoWindow.open(map, marker);
+    });
+
+    markers.push(marker);
+  }
+
+  function clearMarkers() {
+    for (let m of markers) {
+      m.setMap(null);
+    }
+    markers = [];
+    infoWindow.close();
+  }
+
+  function locateMe() {
+    showLoading(true);
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const userLocation = {
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+          };
+
+          // Clear existing markers
+          clearMarkers();
+
+          // Add user location marker
+          const marker = new google.maps.Marker({
+            position: userLocation,
+            map: map,
+            title: "Your Location",
+            icon: {
+              url: "http://maps.google.com/mapfiles/ms/icons/green-dot.png",
+              scaledSize: new google.maps.Size(40, 40)
+            }
+          });
+          markers.push(marker);
+
+          map.setCenter(userLocation);
+          map.setZoom(12);
+
+          // Search hospitals near user
+          const request = {
+            location: userLocation,
+            radius: 50000, // 50km radius
+            type: "hospital",
+          };
+
+          service.nearbySearch(request, (results, status) => {
+            showLoading(false);
+            if (status === google.maps.places.PlacesServiceStatus.OK) {
+              for (let place of results) {
+                createMarker(place);
+              }
+
+              // Adjust view to show all markers
+              const bounds = new google.maps.LatLngBounds();
+              bounds.extend(userLocation);
+              for (let m of markers) {
+                bounds.extend(m.getPosition());
+              }
+              map.fitBounds(bounds);
+            } else {
+              alert("No hospitals found near your location.");
+            }
+          });
+        },
+        (error) => {
+          showLoading(false);
+          alert("Could not get your location. Error: " + error.message);
+        }
+      );
+    } else {
+      showLoading(false);
+      alert("Geolocation is not supported by your browser.");
+    }
+  }
+
+  function showLoading(show) {
+    document.getElementById("loading").style.display = show ? "block" : "none";
+  }
+
+  function switchTab(tabName) {
+    const tabs = document.querySelectorAll('.tab');
+    tabs.forEach(tab => tab.classList.remove('active'));
+
+    if (tabName === 'map') {
+      document.querySelector('.tab:nth-child(1)').classList.add('active');
+      document.getElementById('map-container').style.display = 'block';
+      document.getElementById('chat-container').style.display = 'none';
+    } else {
+      document.querySelector('.tab:nth-child(2)').classList.add('active');
+      document.getElementById('map-container').style.display = 'none';
+      document.getElementById('chat-container').style.display = 'block';
+    }
+  }
+
+  function uploadPDF() {
+	const fileInput = document.getElementById('pdf-upload')
+  const file = fileInput.files[0];
+  
+  if (!file) {
+  	alert("Please choose a PDF file to upload");
+    return;
+  }
+  
+  const formData = new FormData();
+  formData.append("pdf", file);
+  
+  fetch("http://127.0.0.1:5000/upload-pdf", {
+  	method: "POST",
+    body: formData
+  })
+  .then(res => res.json())
+  .then(data => {
+  	if (data.message) {
+    	alert("PDF uploaded successfully.");
+    } else {
+    	alert("Failed to process PDF: " + data.error);
+    }
+  })
+  .catch(err => {
+  	alert("Error uploading PDF: " + err.message);
+  });
+}
+
+  function sendMessage() {
+    const userInput = document.getElementById('user-input');
+    const message = userInput.value.trim();
+
+    if (message) {
+      addMessage(message, 'user');
+      userInput.value = '';
+
+      fetch('http://127.0.0.1:5000/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ message })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.reply) {
+          addMessage(data.reply, 'bot');
+        } else {
+          addMessage("Sorry, I couldn't understand that.", 'bot');
+        }
+      })
+      .catch(err => {
+        addMessage("Error connecting to the chatbot server.", 'bot');
+        console.error(err);
+      });
+    }
+  }
+
+  function clearChat() {
+	localStorage.removeItem('chatHistory');
+  document.getElementById('chat-messages').innerHTML = '';
+}
+
+  function addMessage(text, sender) {
+    const messagesDiv = document.getElementById('chat-messages');
+    const messageDiv = document.createElement('div');
+    messageDiv.classList.add('message', sender + '-message');
+    messageDiv.textContent = text;
+    messagesDiv.appendChild(messageDiv);
+
+    setTimeout(() => {
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }, 0);
+
+    const chatHistory = JSON.parse(localStorage.getItem('chatHistory')) || [];
+    chatHistory.push({ text, sender });
+    localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+  }
+  function sortCitySelector() {
+    const select = document.getElementById("city-selector");
+    const options = Array.from(select.options);
+
+    options.sort((a, b) => a.text.localeCompare(b.text));
+
+    select.innerHTML = '';
+    options.forEach(option => select.appendChild(option));
+  }
+
+  // Allow pressing Enter to send message
+  document.getElementById('user-input').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+      sendMessage();
+    }
+  });
+</script>
+
+
+</body>
+</html>
